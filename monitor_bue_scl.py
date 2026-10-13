@@ -8,6 +8,8 @@ Budget piano free, mese peggiore (19 giorni lun-gio): (12 + 1) x 19 = 247 <= 250
 Scrive ALERT_SCL.md (il workflow apre una issue) se:
   - il minimo del giorno e' un nuovo minimo storico e <= SOGLIA_SCL, oppure
   - una combinazione cala di almeno CALO_PCT rispetto alla sua ultima rilevazione.
+L'issue contiene UN solo itinerario, il migliore del giorno: tra tutte le opzioni con prezzo
+entro TOLLERANZA_PCT dal minimo, quella con durata piu' breve (stesso criterio per il ritorno).
 """
 import os, csv, json, datetime as dt, requests
 
@@ -15,6 +17,7 @@ API_KEY      = os.environ["SERPAPI_KEY"]
 SOGLIA       = int(os.environ.get("SOGLIA_SCL", 1450))
 CALO_PCT     = float(os.environ.get("CALO_PCT", 10))
 COMBO_GIORNO = int(os.environ.get("COMBO_GIORNO", 12))
+TOLLERANZA   = float(os.environ.get("TOLLERANZA_PCT", 5))
 MILANO       = "MXP,LIN,BGY"
 ANDATE       = [dt.date(2026, 12, g) for g in range(20, 25)]
 RITORNI      = [dt.date(2027, 1, g) for g in range(8, 12)]
@@ -63,7 +66,13 @@ def descrivi(opzione):
     righe.append(f"  - durata totale: {round(opzione.get('total_duration', 0) / 60, 1)} h")
     return "\n".join(righe)
 
-nuove, avvisi, segnalate, dettagli = [], [], {}, {}
+def migliore(opzioni):
+    """Piu' breve tra le opzioni con prezzo entro TOLLERANZA_PCT dal minimo."""
+    tetto = min(o["price"] for o in opzioni) * (1 + TOLLERANZA / 100)
+    return min((o for o in opzioni if o["price"] <= tetto),
+               key=lambda o: (o.get("total_duration") or 10**6, o["price"]))
+
+nuove, motivi, candidati, cali = [], [], [], []
 for andata, ritorno in da_controllare:
     try:
         d = cerca(andata, ritorno)
@@ -85,7 +94,8 @@ for andata, ritorno in da_controllare:
         "partenza": best["flights"][0]["departure_airport"]["id"],
     }
     nuove.append(riga)
-    dettagli[(riga["andata"], riga["ritorno"])] = (best, d.get("search_metadata", {}).get("google_flights_url"))
+    url = d.get("search_metadata", {}).get("google_flights_url")
+    candidati += [dict(v, _andata=andata, _ritorno=ritorno, _url=url) for v in voli]
     print(f"{andata} / {ritorno}: {riga['prezzo']} EUR ({riga['compagnie_andata']}, "
           f"{riga['scali_andata']} scali andata, {riga['durata_andata_h']} h, da {riga['partenza']})")
 
@@ -93,8 +103,7 @@ for andata, ritorno in da_controllare:
     if prec:
         calo = (prec - best["price"]) / prec * 100
         if calo >= CALO_PCT:
-            segnalate[(riga["andata"], riga["ritorno"])] = best["price"]
-            avvisi.append(f"- {andata} / {ritorno}: {best['price']} EUR, calo del {calo:.1f}% (era {prec} EUR)")
+            cali.append(calo)
 
 if not nuove:
     raise SystemExit("Nessun prezzo ottenuto oggi.")
@@ -106,27 +115,31 @@ with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
 
 m = min(nuove, key=lambda r: r["prezzo"])
 if m["prezzo"] <= SOGLIA and (prev_min is None or m["prezzo"] < prev_min):
-    segnalate[(m["andata"], m["ritorno"])] = m["prezzo"]
-    avvisi.insert(0, f"Nuovo minimo storico: {m['prezzo']} EUR - andata {m['andata']}, ritorno {m['ritorno']}, "
-                     f"{m['compagnie_andata']}, partenza da {m['partenza']} (precedente: {prev_min} EUR, soglia {SOGLIA} EUR).")
+    motivi.append(f"nuovo minimo storico {m['prezzo']} EUR" + (f" (prima {prev_min} EUR)" if prev_min else ""))
+if cali:
+    motivi.append(f"calo prezzi fino a -{max(cali):.0f}% su {len(cali)} combinazioni")
 
-if avvisi:
-    # dettagli completi (andata + ritorno) per la combinazione segnalata piu' economica: 1 credito extra
-    chiave = min(segnalate, key=segnalate.get)
-    best, url = dettagli[chiave]
-    a, r = (dt.date.fromisoformat(x) for x in chiave)
-    testo = [f"\n## Dettagli {a} / {r} - {best['price']} EUR totali\n", "**Andata Milano -> Buenos Aires**", descrivi(best)]
+if motivi:
+    # un solo itinerario: il migliore del giorno; 1 credito extra per i dettagli del ritorno
+    best = migliore(candidati)
+    a, r, url = best["_andata"], best["_ritorno"], best["_url"]
+    testo = [f"Motivo: {'; '.join(motivi)}.",
+             f"\n## Migliore di oggi: andata {a}, ritorno {r}\n",
+             f"**Andata Milano -> Buenos Aires**", descrivi(best)]
+    totale = best["price"]
     try:
         d2 = cerca(a, r, best.get("departure_token"))
         rit = [v for v in d2.get("best_flights", []) + d2.get("other_flights", []) if "price" in v]
         if "error" in d2 or not rit:
             testo.append(f"\n**Ritorno**: dettagli non disponibili ({d2.get('error', 'nessun volo')})")
         else:
-            rb = min(rit, key=lambda v: v["price"])
-            testo += [f"\n**Ritorno Santiago -> Milano** (prezzo totale itinerario: {rb['price']} EUR)", descrivi(rb)]
+            rb = migliore(rit)
+            totale = rb["price"]
+            testo += ["\n**Ritorno Santiago -> Milano**", descrivi(rb)]
     except requests.RequestException as e:
         testo.append(f"\n**Ritorno**: dettagli non disponibili (errore di rete: {e})")
+    testo.insert(1, f"\n**Prezzo totale: {totale} EUR**")
     if url:
-        testo.append(f"\n[Apri la ricerca su Google Flights]({url})")
+        testo.append(f"\n[Apri su Google Flights]({url})")
     with open("ALERT_SCL.md", "w", encoding="utf-8") as f:
-        f.write("Milano -> Buenos Aires / Santiago -> Milano\n\n" + "\n".join(avvisi) + "\n" + "\n".join(testo))
+        f.write("\n".join(testo) + "\n")
