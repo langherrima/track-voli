@@ -138,6 +138,12 @@ if True:
             rb = migliore(rit)
             totale = rb["price"]
             testo += ["\n**Ritorno Santiago -> Milano**", descrivi(rb)]
+        tutti = [v for v in d2.get("best_flights", []) + d2.get("other_flights", []) if "price" in v]
+        if tutti and min(v["price"] for v in tutti) < totale:
+            ec = min(tutti, key=lambda v: v["price"])
+            compagnie = " + ".join(sorted({f.get("airline", "?") for f in ec["flights"]}))
+            testo.append(f"\n_Ritorno piu' economico senza limite di durata (escluso): {ec['price']} EUR totali, "
+                         f"{compagnie}, {round(ec.get('total_duration', 0) / 60, 1)} h._")
     except requests.RequestException as e:
         testo.append(f"\n**Ritorno**: dettagli non disponibili (errore di rete: {e})")
     sintesi = lambda o: (" + ".join(sorted({f["airline"] for f in o["flights"]})),
