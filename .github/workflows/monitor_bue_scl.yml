@@ -18,7 +18,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python monitor_bue_scl.py
+      - id: monitor
+        run: python monitor_bue_scl.py
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SOGLIA_SCL: ${{ vars.SOGLIA_SCL || '1450' }}
@@ -29,8 +30,9 @@ jobs:
           git add storico_bue_scl.csv
           git commit -m "Prezzi BUE/SCL $(date +%F)" || echo "nessuna modifica"
           git pull --rebase && git push
-      - name: Apri issue se c'è un alert
+      - name: Apri issue con il migliore del giorno
         if: hashFiles('ALERT_SCL.md') != ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue create --title "Alert volo BUE/SCL $(date +%F)" --body-file ALERT_SCL.md
+          TITOLO: ${{ steps.monitor.outputs.titolo }}
+        run: gh issue create --title "$TITOLO" --body-file ALERT_SCL.md

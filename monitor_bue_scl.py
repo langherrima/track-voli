@@ -5,7 +5,7 @@ a rotazione (1 credito SerpApi ciascuna): due esecuzioni consecutive coprono tut
 In caso di alert, 1 credito extra per i dettagli della tratta di ritorno (SerpApi
 restituisce solo la prima tratta; la successiva richiede il departure_token).
 Budget piano free, mese peggiore (19 giorni lun-gio): (12 + 1) x 19 = 247 <= 250.
-Scrive ALERT_SCL.md (il workflow apre una issue) se:
+Scrive ogni giorno ALERT_SCL.md (il workflow apre una issue). Nel titolo compare "ALERT" se:
   - il minimo del giorno e' un nuovo minimo storico e <= SOGLIA_SCL, oppure
   - una combinazione cala di almeno CALO_PCT rispetto alla sua ultima rilevazione.
 L'issue contiene UN solo itinerario, il migliore del giorno: tra tutte le opzioni con prezzo
@@ -119,11 +119,11 @@ if m["prezzo"] <= SOGLIA and (prev_min is None or m["prezzo"] < prev_min):
 if cali:
     motivi.append(f"calo prezzi fino a -{max(cali):.0f}% su {len(cali)} combinazioni")
 
-if motivi:
+if True:
     # un solo itinerario: il migliore del giorno; 1 credito extra per i dettagli del ritorno
     best = migliore(candidati)
     a, r, url = best["_andata"], best["_ritorno"], best["_url"]
-    testo = [f"Motivo: {'; '.join(motivi)}.",
+    testo = [f"Motivo alert: {'; '.join(motivi)}." if motivi else "Nessun alert oggi: report quotidiano.",
              f"\n## Migliore di oggi: andata {a}, ritorno {r}\n",
              f"**Andata Milano -> Buenos Aires**", descrivi(best)]
     totale = best["price"]
@@ -143,3 +143,7 @@ if motivi:
         testo.append(f"\n[Apri su Google Flights]({url})")
     with open("ALERT_SCL.md", "w", encoding="utf-8") as f:
         f.write("\n".join(testo) + "\n")
+    titolo = f"{'ALERT - ' if motivi else ''}Volo BUE/SCL {oggi}: {totale} EUR ({a.strftime('%d/%m')} - {r.strftime('%d/%m')})"
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write(f"titolo={titolo}\n")
