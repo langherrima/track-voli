@@ -29,7 +29,9 @@ COL_GIORNO   = ["data", "alert", "andata", "ritorno", "prezzo_totale",
                 "compagnie_andata", "scali_andata", "durata_andata_h", "partenza",
                 "compagnie_ritorno", "scali_ritorno", "durata_ritorno_h", "arrivo",
                 "minimo_2_esecuzioni", "date_minimo_2_esecuzioni"]
-COLONNE      = ["data", "andata", "ritorno", "prezzo"]   # prezzo = totale andata + ritorno
+# prezzo = totale andata + ritorno; compagnie/scali/durata = solo andata (il ritorno costerebbe 1 credito in piu')
+COLONNE      = ["data", "andata", "ritorno", "prezzo", "compagnie_andata",
+                "scali_andata", "durata_andata_h", "partenza"]
 
 oggi = dt.date.today()
 if oggi >= ANDATE[0]:
@@ -95,11 +97,16 @@ for andata, ritorno in da_controllare:
     riga = {
         "data": oggi.isoformat(), "andata": andata.isoformat(), "ritorno": ritorno.isoformat(),
         "prezzo": best["price"],
+        "compagnie_andata": " + ".join(sorted({f["airline"] for f in best["flights"]})),
+        "scali_andata": len(best["flights"]) - 1,
+        "durata_andata_h": round(best.get("total_duration", 0) / 60, 1),
+        "partenza": best["flights"][0]["departure_airport"]["id"],
     }
     nuove.append(riga)
     url = d.get("search_metadata", {}).get("google_flights_url")
     candidati += [dict(v, _andata=andata, _ritorno=ritorno, _url=url) for v in voli]
-    print(f"{andata} / {ritorno}: {riga['prezzo']} EUR")
+    print(f"{andata} / {ritorno}: {riga['prezzo']} EUR ({riga['compagnie_andata']}, "
+          f"{riga['scali_andata']} scali andata, {riga['durata_andata_h']} h, da {riga['partenza']})")
 
     prec = ultimo.get((riga["andata"], riga["ritorno"]))
     if prec:
