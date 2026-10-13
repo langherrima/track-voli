@@ -27,7 +27,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add storico_bue_scl.csv
+          git add storico_bue_scl.csv storico_migliore_giorno.csv
           git commit -m "Prezzi BUE/SCL $(date +%F)" || echo "nessuna modifica"
           git pull --rebase && git push
       - name: Apri issue con il migliore del giorno

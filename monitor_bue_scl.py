@@ -23,6 +23,10 @@ ANDATE       = [dt.date(2026, 12, g) for g in range(20, 25)]
 RITORNI      = [dt.date(2027, 1, g) for g in range(8, 12)]
 COMBO        = [(a, r) for a in ANDATE for r in RITORNI]
 CSV_FILE     = "storico_bue_scl.csv"
+CSV_GIORNO   = "storico_migliore_giorno.csv"
+COL_GIORNO   = ["data", "alert", "andata", "ritorno", "prezzo_totale",
+                "compagnie_andata", "scali_andata", "durata_andata_h", "partenza",
+                "compagnie_ritorno", "scali_ritorno", "durata_ritorno_h", "arrivo"]
 COLONNE      = ["data", "andata", "ritorno", "prezzo", "compagnie_andata",
                 "scali_andata", "durata_andata_h", "partenza"]
 
@@ -126,7 +130,7 @@ if True:
     testo = [f"Motivo alert: {'; '.join(motivi)}." if motivi else "Nessun alert oggi: report quotidiano.",
              f"\n## Migliore di oggi: andata {a}, ritorno {r}\n",
              f"**Andata Milano -> Buenos Aires**", descrivi(best)]
-    totale = best["price"]
+    totale, rb = best["price"], None
     try:
         d2 = cerca(a, r, best.get("departure_token"))
         rit = [v for v in d2.get("best_flights", []) + d2.get("other_flights", []) if "price" in v]
@@ -138,6 +142,20 @@ if True:
             testo += ["\n**Ritorno Santiago -> Milano**", descrivi(rb)]
     except requests.RequestException as e:
         testo.append(f"\n**Ritorno**: dettagli non disponibili (errore di rete: {e})")
+    sintesi = lambda o: (" + ".join(sorted({f["airline"] for f in o["flights"]})),
+                         len(o["flights"]) - 1, round(o.get("total_duration", 0) / 60, 1))
+    ca, sa, da = sintesi(best)
+    cr, sr, dr = sintesi(rb) if rb else ("", "", "")
+    nuovo = not os.path.exists(CSV_GIORNO)
+    with open(CSV_GIORNO, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=COL_GIORNO)
+        if nuovo: w.writeheader()
+        w.writerow({"data": oggi.isoformat(), "alert": "si" if motivi else "no",
+                    "andata": a.isoformat(), "ritorno": r.isoformat(), "prezzo_totale": totale,
+                    "compagnie_andata": ca, "scali_andata": sa, "durata_andata_h": da,
+                    "partenza": best["flights"][0]["departure_airport"]["id"],
+                    "compagnie_ritorno": cr, "scali_ritorno": sr, "durata_ritorno_h": dr,
+                    "arrivo": rb["flights"][-1]["arrival_airport"]["id"] if rb else ""})
     testo.insert(1, f"\n**Prezzo totale: {totale} EUR**")
     if url:
         testo.append(f"\n[Apri su Google Flights]({url})")
