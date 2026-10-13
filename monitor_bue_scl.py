@@ -17,6 +17,7 @@ API_KEY      = os.environ["SERPAPI_KEY"]
 SOGLIA       = int(os.environ.get("SOGLIA_SCL", 1450))
 CALO_PCT     = float(os.environ.get("CALO_PCT", 10))
 COMBO_GIORNO = int(os.environ.get("COMBO_GIORNO", 12))
+MAX_ORE      = float(os.environ.get("MAX_ORE", 24))   # durata massima per tratta, scali inclusi
 TOLLERANZA   = float(os.environ.get("TOLLERANZA_PCT", 5))
 MILANO       = "MXP,LIN,BGY"
 ANDATE       = [dt.date(2026, 12, g) for g in range(20, 25)]
@@ -64,12 +65,14 @@ def descrivi(opzione):
     righe = []
     for f in opzione["flights"]:
         righe.append(f"  - {f.get('airline', '?')} {f.get('flight_number', '')}: "
-                     f"{f['departure_airport']['id']} {f['departure_airport'].get('time', '')} -> "
-                     f"{f['arrival_airport']['id']} {f['arrival_airport'].get('time', '')}")
+                     f"{f['departure_airport']['id']} -> {f['arrival_airport']['id']}")
     for l in opzione.get("layovers", []):
         righe.append(f"  - scalo a {l.get('id', '?')}: {round(l.get('duration', 0) / 60, 1)} h")
     righe.append(f"  - durata totale: {round(opzione.get('total_duration', 0) / 60, 1)} h")
     return "\n".join(righe)
+
+def entro_limite(opzioni):
+    return [o for o in opzioni if "price" in o and 0 < (o.get("total_duration") or 0) <= MAX_ORE * 60]
 
 def migliore(opzioni):
     """Piu' breve tra le opzioni con prezzo entro TOLLERANZA_PCT dal minimo."""
@@ -85,9 +88,9 @@ for andata, ritorno in da_controllare:
         print(f"{andata} / {ritorno}: errore di rete ({e})"); continue
     if "error" in d:
         print(f"{andata} / {ritorno}: errore SerpApi ({d['error']})"); continue
-    voli = [v for v in d.get("best_flights", []) + d.get("other_flights", []) if "price" in v]
+    voli = entro_limite(d.get("best_flights", []) + d.get("other_flights", []))
     if not voli:
-        print(f"{andata} / {ritorno}: nessun volo"); continue
+        print(f"{andata} / {ritorno}: nessun volo entro {MAX_ORE:g} h"); continue
 
     best = min(voli, key=lambda v: v["price"])
     riga = {
@@ -134,9 +137,9 @@ if True:
     totale, rb = best["price"], None
     try:
         d2 = cerca(a, r, best.get("departure_token"))
-        rit = [v for v in d2.get("best_flights", []) + d2.get("other_flights", []) if "price" in v]
+        rit = entro_limite(d2.get("best_flights", []) + d2.get("other_flights", []))
         if "error" in d2 or not rit:
-            testo.append(f"\n**Ritorno**: dettagli non disponibili ({d2.get('error', 'nessun volo')})")
+            testo.append(f"\n**Ritorno**: dettagli non disponibili ({d2.get('error', f'nessun volo entro {MAX_ORE:g} h')})")
         else:
             rb = migliore(rit)
             totale = rb["price"]
