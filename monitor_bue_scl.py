@@ -26,7 +26,8 @@ CSV_FILE     = "storico_bue_scl.csv"
 CSV_GIORNO   = "storico_migliore_giorno.csv"
 COL_GIORNO   = ["data", "alert", "andata", "ritorno", "prezzo_totale",
                 "compagnie_andata", "scali_andata", "durata_andata_h", "partenza",
-                "compagnie_ritorno", "scali_ritorno", "durata_ritorno_h", "arrivo"]
+                "compagnie_ritorno", "scali_ritorno", "durata_ritorno_h", "arrivo",
+                "minimo_2_esecuzioni", "date_minimo_2_esecuzioni"]
 COLONNE      = ["data", "andata", "ritorno", "prezzo", "compagnie_andata",
                 "scali_andata", "durata_andata_h", "partenza"]
 
@@ -146,6 +147,12 @@ if True:
                          len(o["flights"]) - 1, round(o.get("total_duration", 0) / 60, 1))
     ca, sa, da = sintesi(best)
     cr, sr, dr = sintesi(rb) if rb else ("", "", "")
+    # minimo puro su tutte le 20 combinazioni: esecuzione precedente + oggi (oggi prevale)
+    date_prec = [x["data"] for x in storico if x["data"] < oggi.isoformat()]
+    copertura = {(x["andata"], x["ritorno"]): int(x["prezzo"])
+                 for x in storico if date_prec and x["data"] == max(date_prec) and x["prezzo"]}
+    copertura.update({(x["andata"], x["ritorno"]): int(x["prezzo"]) for x in nuove})
+    k2 = min(copertura, key=copertura.get)
     nuovo = not os.path.exists(CSV_GIORNO)
     with open(CSV_GIORNO, "a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=COL_GIORNO)
@@ -155,7 +162,9 @@ if True:
                     "compagnie_andata": ca, "scali_andata": sa, "durata_andata_h": da,
                     "partenza": best["flights"][0]["departure_airport"]["id"],
                     "compagnie_ritorno": cr, "scali_ritorno": sr, "durata_ritorno_h": dr,
-                    "arrivo": rb["flights"][-1]["arrival_airport"]["id"] if rb else ""})
+                    "arrivo": rb["flights"][-1]["arrival_airport"]["id"] if rb else "",
+                    "minimo_2_esecuzioni": copertura[k2],
+                    "date_minimo_2_esecuzioni": f"{k2[0]} / {k2[1]}"})
     testo.insert(1, f"\n**Prezzo totale: {totale} EUR**")
     if url:
         testo.append(f"\n[Apri su Google Flights]({url})")
