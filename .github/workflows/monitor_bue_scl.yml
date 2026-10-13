@@ -22,7 +22,7 @@ jobs:
         run: python monitor_bue_scl.py
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          SOGLIA_SCL: ${{ vars.SOGLIA_SCL || '1450' }}
+          SOGLIA_SCL: ${{ vars.SOGLIA_SCL || '1800' }}
       - name: Salva storico
         run: |
           git config user.name "github-actions"

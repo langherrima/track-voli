@@ -14,7 +14,7 @@ entro TOLLERANZA_PCT dal minimo, quella con durata piu' breve (stesso criterio p
 import os, csv, json, datetime as dt, requests
 
 API_KEY      = os.environ["SERPAPI_KEY"]
-SOGLIA       = int(os.environ.get("SOGLIA_SCL", 1450))
+SOGLIA       = int(os.environ.get("SOGLIA_SCL", 1800))
 CALO_PCT     = float(os.environ.get("CALO_PCT", 10))
 COMBO_GIORNO = int(os.environ.get("COMBO_GIORNO", 12))
 MAX_ORE      = float(os.environ.get("MAX_ORE", 24))   # durata massima per tratta, scali inclusi
