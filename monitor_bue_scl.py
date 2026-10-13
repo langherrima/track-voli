@@ -55,7 +55,7 @@ def cerca(andata, ritorno, token=None):
     tratte = [{"departure_id": MILANO, "arrival_id": "EZE", "date": andata.isoformat()},
               {"departure_id": "SCL", "arrival_id": MILANO, "date": ritorno.isoformat()}]
     params = {"engine": "google_flights", "type": 3, "multi_city_json": json.dumps(tratte),
-              "stops": 3, "currency": "EUR", "hl": "it", "gl": "it", "api_key": API_KEY}
+              "stops": 3, "max_duration": int(MAX_ORE * 60), "currency": "EUR", "hl": "it", "gl": "it", "api_key": API_KEY}
     if token:
         params["departure_token"] = token
     return requests.get("https://serpapi.com/search", params=params, timeout=60).json()
@@ -163,6 +163,10 @@ if True:
                     "minimo_2_esecuzioni": copertura[k2],
                     "date_minimo_2_esecuzioni": f"{k2[0]} / {k2[1]}"})
     testo.insert(1, f"\n**Prezzo totale: {totale} EUR**")
+    if totale != best["price"]:
+        # verifica di max_duration: se il filtro vale anche per il ritorno i due prezzi coincidono
+        testo.insert(2, f"_Nota: la ricerca per date indicava {best['price']} EUR; con il ritorno scelto il totale e' "
+                        f"{totale} EUR. I prezzi in storico_bue_scl.csv possono essere sottostimati._")
     if url:
         testo.append(f"\n[Apri su Google Flights]({url})")
     with open("ALERT_SCL.md", "w", encoding="utf-8") as f:
