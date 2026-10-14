@@ -2,3 +2,4 @@ data,alert,andata,ritorno,prezzo_totale,compagnie_andata,scali_andata,durata_and
 2026-10-13,no,2026-12-21,2027-01-11,2314,Aerolineas Argentinas + ITA,1,17.7,LIN,ITA + LATAM,2,18.3,LIN,1625,2026-12-21 / 2027-01-11
 2026-10-13,no,2026-12-21,2027-01-11,2314,Aerolineas Argentinas + ITA,1,17.7,LIN,ITA + LATAM,2,18.3,LIN,1625,2026-12-21 / 2027-01-11
 2026-10-13,no,2026-12-21,2027-01-10,1759,Air Europa,1,21.0,MXP,Air Europa + Sky Airline,2,22.3,MXP,1685,2026-12-23 / 2027-01-11
+2026-10-14,si,2026-12-23,2027-01-11,1625,Air Europa,1,21.0,MXP,Air Europa + Sky Airline,2,22.3,MXP,1625,2026-12-23 / 2027-01-11
