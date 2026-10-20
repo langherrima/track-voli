@@ -5,3 +5,4 @@ data,alert,andata,ritorno,prezzo_totale,compagnie_andata,scali_andata,durata_and
 2026-10-14,si,2026-12-23,2027-01-11,1625,Air Europa,1,21.0,MXP,Air Europa + Sky Airline,2,22.3,MXP,1625,2026-12-23 / 2027-01-11
 2026-10-15,no,2026-12-23,2027-01-11,2396,Air Dolomiti + Lufthansa,1,17.0,LIN,Iberia,1,16.7,MXP,1672,2026-12-24 / 2027-01-11
 2026-10-19,no,2026-12-24,2027-01-11,1884,KLM,1,18.9,LIN,Air France,1,19.7,MXP,1759,2026-12-23 / 2027-01-10
+2026-10-20,si,2026-12-22,2027-01-10,1790,Air Europa,1,21.0,MXP,Air Europa + Sky Airline,2,22.3,MXP,1790,2026-12-22 / 2027-01-10
