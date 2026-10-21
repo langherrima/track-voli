@@ -1,4 +1,4 @@
-"""Monitor giornaliero Milano -> Tokyo, A/R 24/12/2026 - 10/01/2027.
+"""Monitor giornaliero Milano -> Tokyo, A/R 24/12/2026 - 11/01/2027.
 Condizioni: max 1 scalo per tratta, scalo max MAX_SCALO_MIN minuti.
 Crediti SerpApi: 1 ricerca andata + 1 ricerca ritorno per tentativo (di norma 2 al giorno).
 """
@@ -12,7 +12,7 @@ STORICO = "storico_mil_tyo.csv"
 BASE = dict(
     engine="google_flights", type=1,
     departure_id="MXP,LIN,BGY", arrival_id="HND,NRT",
-    outbound_date="2026-12-24", return_date="2027-01-10",
+    outbound_date="2026-12-24", return_date="2027-01-11",
     adults=1, travel_class=1, stops=2,                # stops=2 -> 1 scalo o meno
     layover_duration=f"0,{MAX_SCALO}",
     currency="EUR", hl="it", gl="it", api_key=API_KEY,
@@ -88,7 +88,7 @@ else:
         f"**Prezzo più basso A/R: {prezzo} €**{var}\n\n"
         f"**Andata 24/12** — {da['compagnie']} ({da['voli']})\n"
         f"{da['da']} {da['partenza']} → {da['a']} {da['arrivo']} · scalo {da['scalo']} · durata {da['durata']}\n\n"
-        f"**Ritorno 10/01** — {dr['compagnie']} ({dr['voli']})\n"
+        f"**Ritorno 11/01** — {dr['compagnie']} ({dr['voli']})\n"
         f"{dr['da']} {dr['partenza']} → {dr['a']} {dr['arrivo']} · scalo {dr['scalo']} · durata {dr['durata']}\n"
     )
 
