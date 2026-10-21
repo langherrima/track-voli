@@ -1,0 +1,38 @@
+name: Monitor volo MIL-TYO
+
+on:
+  schedule:
+    - cron: "23 6 * * *"   # ogni giorno, 06:23 UTC = 08:23 ora legale, 07:23 dopo il 25/10
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - id: monitor
+        run: python monitor_mil_tyo.py
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          MAX_SCALO_MIN: "210"
+      - name: Salva storico
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add storico_mil_tyo.csv || true
+          git commit -m "Prezzi MIL/TYO $(date +%F)" || echo "nessuna modifica"
+          git pull --rebase && git push
+      - name: Apri issue con il prezzo del giorno
+        if: hashFiles('ALERT_TYO.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITOLO: ${{ steps.monitor.outputs.titolo }}
+        run: gh issue create --title "$TITOLO" --body-file ALERT_TYO.md
