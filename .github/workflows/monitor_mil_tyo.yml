@@ -3,6 +3,7 @@ name: Monitor volo MIL-TYO
 on:
   schedule:
     - cron: "23 6 * * *"   # ogni giorno, 06:23 UTC = 08:23 ora legale, 07:23 dopo il 25/10
+    - cron: "47 9 * * *"   # riserva, se il primo salta (se ha già girato esce senza usare crediti)
   workflow_dispatch:
 
 permissions:
