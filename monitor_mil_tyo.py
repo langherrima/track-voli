@@ -9,6 +9,14 @@ MAX_SCALO = int(os.environ.get("MAX_SCALO_MIN", 210))   # 3h30
 MAX_TENTATIVI = int(os.environ.get("MAX_TENTATIVI", 3))  # andate provate se il ritorno non rispetta i vincoli
 STORICO = "storico_mil_tyo.csv"
 
+# Se oggi ha già girato (es. il cron di riserva dopo quello del mattino) esce senza usare crediti
+OGGI = dt.date.today().isoformat()
+if os.path.exists(STORICO):
+    with open(STORICO, newline="") as fh:
+        if any(r.get("data") == OGGI for r in csv.DictReader(fh)):
+            print("Già eseguito oggi:", OGGI)
+            raise SystemExit(0)
+
 BASE = dict(
     engine="google_flights", type=1,
     departure_id="MXP,LIN,BGY", arrival_id="HND,NRT",
