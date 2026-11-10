@@ -23,7 +23,7 @@ jobs:
         run: python monitor_mil_dfw.py
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-          MAX_SCALO_MIN: "180"
+          MAX_SCALO_MIN: "220"
       - name: Salva storico
         run: |
           git config user.name "github-actions"
