@@ -1,4 +1,4 @@
-"""Monitor giornaliero multi-city: Milano -> Dallas 22/12/2026, New Orleans -> Milano 08/01/2027.
+"""Monitor giornaliero multi-city: Milano -> New Orleans 22/12/2026, Dallas -> Milano 09/01/2027.
 Condizioni: max 1 scalo per tratta, scalo max MAX_SCALO_MIN minuti.
 Crediti SerpApi: 1 ricerca prima tratta + 1 per ciascuna delle MAX_TENTATIVI andate provate (di norma 4 al giorno).
 """
@@ -18,8 +18,8 @@ if os.path.exists(STORICO):
             raise SystemExit(0)
 
 TRATTE = [
-    {"departure_id": "MXP,LIN,BGY", "arrival_id": "DFW,DAL", "date": "2026-12-22"},
-    {"departure_id": "MSY", "arrival_id": "MXP,LIN,BGY", "date": "2027-01-08"},
+    {"departure_id": "MXP,LIN,BGY", "arrival_id": "MSY", "date": "2026-12-22"},
+    {"departure_id": "DFW,DAL", "arrival_id": "MXP,LIN,BGY", "date": "2027-01-09"},
 ]
 BASE = dict(
     engine="google_flights", type=3, multi_city_json=json.dumps(TRATTE),
@@ -79,7 +79,7 @@ elenco = f"\n**Andate più economiche trovate (prezzo totale indicativo):**\n{el
 
 if not best:
     testo = f"Nessun itinerario trovato oggi ({OGGI}) con max 1 scalo e scalo entro {hm(MAX_SCALO)}.\n{elenco}"
-    titolo = f"MIL-DFW/MSY {OGGI}: nessun risultato"
+    titolo = f"MIL-MSY/DFW {OGGI}: nessun risultato"
 else:
     a, r = best
     prezzo = r["price"]                      # nell'ultima tratta il prezzo è il totale dell'itinerario
@@ -96,12 +96,12 @@ else:
         w = csv.DictWriter(fh, fieldnames=list(riga.keys()))
         w.writeheader()
         w.writerows(storico)
-    titolo = f"MIL-DFW/MSY {OGGI}: {prezzo} €"
+    titolo = f"MIL-MSY/DFW {OGGI}: {prezzo} €"
     testo = (
         f"**Prezzo più basso totale: {prezzo} €**{var}\n\n"
-        f"**Andata 22/12 Milano → Dallas** — {da['compagnie']} ({da['voli']})\n"
+        f"**Andata 22/12 Milano → New Orleans** — {da['compagnie']} ({da['voli']})\n"
         f"{da['da']} {da['partenza']} → {da['a']} {da['arrivo']} · scalo {da['scalo']} · durata {da['durata']}\n\n"
-        f"**Ritorno 08/01 New Orleans → Milano** — {dr['compagnie']} ({dr['voli']})\n"
+        f"**Ritorno 09/01 Dallas → Milano** — {dr['compagnie']} ({dr['voli']})\n"
         f"{dr['da']} {dr['partenza']} → {dr['a']} {dr['arrivo']} · scalo {dr['scalo']} · durata {dr['durata']}\n"
         f"{elenco}"
     )
