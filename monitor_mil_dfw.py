@@ -5,7 +5,7 @@ Crediti SerpApi: 1 ricerca prima tratta + 1 per ciascuna delle MAX_TENTATIVI and
 import os, csv, json, datetime as dt, requests
 
 API_KEY = os.environ["SERPAPI_KEY"]
-MAX_SCALO = int(os.environ.get("MAX_SCALO_MIN", 180))   # 3h00
+MAX_SCALO = int(os.environ.get("MAX_SCALO_MIN", 220))   # 3h40
 MAX_TENTATIVI = int(os.environ.get("MAX_TENTATIVI", 3))  # andate di cui si cerca il ritorno
 STORICO = "storico_mil_dfw.csv"
 
