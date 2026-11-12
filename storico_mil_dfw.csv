@@ -1,3 +1,4 @@
 data,prezzo,and_compagnie,and_voli,and_da,and_a,and_partenza,and_arrivo,and_scalo,and_durata,rit_compagnie,rit_voli,rit_da,rit_a,rit_partenza,rit_arrivo,rit_scalo,rit_durata
 2026-11-10,1003,British Airways,BA 567 / BA 225,LIN,MSY,2026-12-22 11:25,2026-12-22 17:50,LHR 1h15,13h25,American,AA 1654 / AA 198,DFW,MXP,2027-01-09 12:48,2027-01-10 08:05,JFK 0h51,12h17
 2026-11-11,986,United,UA 18 / UA 782,MXP,MSY,2026-12-22 09:45,2026-12-22 18:39,EWR 3h19,15h54,Lufthansa,LH 439 / LH 272,DFW,LIN,2027-01-09 16:15,2027-01-10 12:40,FRA 2h20,13h25
+2026-11-12,1002,British Airways,BA 567 / BA 225,LIN,MSY,2026-12-22 11:25,2026-12-22 17:50,LHR 1h15,13h25,American,AA 1654 / AA 198,DFW,MXP,2027-01-09 12:48,2027-01-10 08:05,JFK 0h51,12h17
