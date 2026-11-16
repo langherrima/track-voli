@@ -1,13 +1,13 @@
-"""Monitor giornaliero multi-city: Milano -> New Orleans 22/12/2026, Dallas -> Milano 09/01/2027.
+"""Monitor giornaliero multi-city: Milano -> Kochi 21/12/2026, Chennai -> Milano 10/01/2027.
 Condizioni: max 1 scalo per tratta, scalo max MAX_SCALO_MIN minuti.
 Crediti SerpApi: 1 ricerca prima tratta + 1 per ciascuna delle MAX_TENTATIVI andate provate (di norma 4 al giorno).
 """
 import os, csv, json, datetime as dt, requests
 
 API_KEY = os.environ["SERPAPI_KEY"]
-MAX_SCALO = int(os.environ.get("MAX_SCALO_MIN", 220))   # 3h40
+MAX_SCALO = int(os.environ.get("MAX_SCALO_MIN", 210))   # 3h30
 MAX_TENTATIVI = int(os.environ.get("MAX_TENTATIVI", 3))  # andate di cui si cerca il ritorno
-STORICO = "storico_mil_dfw.csv"
+STORICO = "storico_mil_ind.csv"
 
 # Se oggi ha già girato (es. il cron di riserva) esce senza usare crediti
 OGGI = dt.date.today().isoformat()
@@ -18,8 +18,8 @@ if os.path.exists(STORICO):
             raise SystemExit(0)
 
 TRATTE = [
-    {"departure_id": "MXP,LIN,BGY", "arrival_id": "MSY", "date": "2026-12-22"},
-    {"departure_id": "DFW,DAL", "arrival_id": "MXP,LIN,BGY", "date": "2027-01-09"},
+    {"departure_id": "MXP,LIN,BGY", "arrival_id": "COK", "date": "2026-12-21"},
+    {"departure_id": "MAA", "arrival_id": "MXP,LIN,BGY", "date": "2027-01-10"},
 ]
 BASE = dict(
     engine="google_flights", type=3, multi_city_json=json.dumps(TRATTE),
@@ -79,7 +79,7 @@ elenco = f"\n**Andate più economiche trovate (prezzo totale indicativo):**\n{el
 
 if not best:
     testo = f"Nessun itinerario trovato oggi ({OGGI}) con max 1 scalo e scalo entro {hm(MAX_SCALO)}.\n{elenco}"
-    titolo = f"MIL-MSY/DFW {OGGI}: nessun risultato"
+    titolo = f"MIL-COK/MAA {OGGI}: nessun risultato"
 else:
     a, r = best
     prezzo = r["price"]                      # nell'ultima tratta il prezzo è il totale dell'itinerario
@@ -96,17 +96,17 @@ else:
         w = csv.DictWriter(fh, fieldnames=list(riga.keys()))
         w.writeheader()
         w.writerows(storico)
-    titolo = f"MIL-MSY/DFW {OGGI}: {prezzo} €"
+    titolo = f"MIL-COK/MAA {OGGI}: {prezzo} €"
     testo = (
         f"**Prezzo più basso totale: {prezzo} €**{var}\n\n"
-        f"**Andata 22/12 Milano → New Orleans** — {da['compagnie']} ({da['voli']})\n"
+        f"**Andata 21/12 Milano → Kochi** — {da['compagnie']} ({da['voli']})\n"
         f"{da['da']} {da['partenza']} → {da['a']} {da['arrivo']} · scalo {da['scalo']} · durata {da['durata']}\n\n"
-        f"**Ritorno 09/01 Dallas → Milano** — {dr['compagnie']} ({dr['voli']})\n"
+        f"**Ritorno 10/01 Chennai → Milano** — {dr['compagnie']} ({dr['voli']})\n"
         f"{dr['da']} {dr['partenza']} → {dr['a']} {dr['arrivo']} · scalo {dr['scalo']} · durata {dr['durata']}\n"
         f"{elenco}"
     )
 
-with open("ALERT_DFW.md", "w") as fh:
+with open("ALERT_IND.md", "w") as fh:
     fh.write(testo)
 with open(os.environ.get("GITHUB_OUTPUT", os.devnull), "a") as fh:
     fh.write(f"titolo={titolo}\n")
